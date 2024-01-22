@@ -75,7 +75,6 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
         #s[0,:] = np.random.uniform(low = -1.2, high = 0.6, size = num_trials)
         env.reset()
         costs = []
-        s_vec = []
         for h in (range(H)):
             X = phi.fourier_basis(s.T)
             q = np.zeros((num_trials,3))
@@ -83,10 +82,8 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
                 q[:,a] = X @ theta1[h,a]
             a = np.argmin(q, axis=1)
             cost, s_ = env.step_broadcast(s, a, num_trials, var)
-            #tuples.append([s.T,a+1,cost,np.array(s_).T,h])
-            costs.append(cost)
             s = s_
-            s_vec.append(s)
+            costs.append(cost)
     else:
         
         num_trials = 1
@@ -96,7 +93,6 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
         s[0,:] = np.ones(num_trials) * - 0.5
         env.reset()
         costs = []
-        s_vec = []
         for h in (range(H)):
             X = phi.fourier_basis(s.T)
             q = np.zeros((num_trials,3))
@@ -104,11 +100,10 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
                 q[:,a] = X @ theta2[h,a]
             a = np.argmin(q, axis=1)
             cost, s_ = env.step_broadcast(s, a, num_trials, var)
-            costs.append(cost)
             s = s_
-            s_vec.append(s)
+            costs.append(cost)
         
-    return costs,s_vec
+    return costs
 
 
 
@@ -166,43 +161,18 @@ def evaluate_steps(policy, H, var, theta1, theta2, phi):
         
     return costs, s_vec, step
 
-def run_experiment(H, num_trials, phi, num_success, gamma = 1.0):
+def run_experiment(H, num_trials, phi, d, num_success=1, gamma = 1.0):
     tuples = get_data(H, num_trials, num_success)
     features = 'fourier'
-    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma)
+    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma, d)
     theta1 = agent.update_Q_log()
     theta2 = agent.update_Q_sq()
     var = 0.0
-    cost_log,s_vec_log = evaluate_policy('log', H, var, theta1, theta2, phi)
-    cost_sq,s_vec_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
+    cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
+    cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
     
-    return [step_log,step_sq]
+    return [sum(cost_log), sum(cost_sq)]
 
-
-def run_experiment_horizon(H, num_trials, phi, num_success, gamma = 1.0):
-    tuples = get_data(H, num_trials, num_success)
-    features = 'fourier'
-    agent = FittedQIteration(phi,features,tuples,H,num_trials, gamma)
-    theta1 = agent.update_Q_log()
-    #theta2 = agent.update_Q_sq()
-    theta2 = theta1
-    var = 0.0
-    cost_log,s_vec_log,step_log = evaluate_steps('log', H, var, theta1, theta2, phi)
-    cost_sq,s_vec_sq,step_sq = evaluate_steps('sq', H, var, theta1, theta2, phi)
-    
-    return [step_log, step_sq]
-
-
-def run_experiment2(tup, H, num_trials, phi):
-    features = 'fourier'
-    agent = FittedQIteration(phi,features,tup,H,num_trials)
-    theta1 = agent.update_Q_log()
-    theta2 = agent.update_Q_sq()
-    var = 0.0
-    cost_log,s_vec_log = evaluate_policy('log', H, var, theta1, theta2, phi)
-    cost_sq,s_vec_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
-    
-    return [(sum(cost_log)), sum(sum(cost_sq))]
 
 
 def fixed_trajectory_loop(data, tuples, phi, runs, H, num_trials, njob):
@@ -220,4 +190,31 @@ def fixed_trajectory_loop(data, tuples, phi, runs, H, num_trials, njob):
         print('Time: %ss' %(toc-tic))
         c.append(x)
     return c
+
+
+
+def run_experiment_horizon(H, num_trials, phi, num_success, gamma = 1.0):
+    tuples = get_data(H, num_trials, num_success)
+    features = 'fourier'
+    agent = FittedQIteration(phi,features,tuples,H,num_trials, gamma)
+    theta1 = agent.update_Q_log()
+    #theta2 = agent.update_Q_sq()
+    theta2 = theta1
+    var = 0.0
+    cost_log,s_vec_log,step_log = evaluate_steps('log', H, var, theta1, theta2, phi)
+    cost_sq,s_vec_sq,step_sq = evaluate_steps('sq', H, var, theta1, theta2, phi)
+    
+    return [step_log, step_sq]
+
+
+def run_experiment_fixed_data(tup, H, num_trials, phi):
+    features = 'fourier'
+    agent = FittedQIteration(phi,features,tup,H,num_trials)
+    theta1 = agent.update_Q_log()
+    theta2 = agent.update_Q_sq()
+    var = 0.0
+    cost_log,s_vec_log = evaluate_policy('log', H, var, theta1, theta2, phi)
+    cost_sq,s_vec_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
+    
+    return [(sum(cost_log)), sum(sum(cost_sq))]
         

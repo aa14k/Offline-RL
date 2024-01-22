@@ -10,14 +10,14 @@ import timeit
 import copy
 
 class FittedQIteration(object):
-    def __init__(self,phi,features,data,horizon,num_trials,gamma):
+    def __init__(self,phi,features,data,horizon,num_trials,gamma,d):
         self.phi = phi
         self.features = features
         self.data = data
         self.H = horizon
         self.n = num_trials
         self.gamma = gamma
-        self.d = len(self.phi.order_list)
+        self.d = d
         self.theta_sq_ = np.zeros((self.H,3,self.d)) 
         self.theta_sq = np.zeros((self.H,3,self.d))
         self.theta_log = np.zeros((self.H,3,self.d))
@@ -152,7 +152,7 @@ class FittedQIteration(object):
 
     def func(self, theta, X, Y):
         # Return residual = fit-observed
-        return self.sigmoid(np.inner(x,theta)) - y
+        return self.sigmoid(np.inner(X,theta)) - Y
 
     def func1(self, theta, X, Y):
         # Return residual = fit-observed
