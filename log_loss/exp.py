@@ -5,9 +5,11 @@ from joblib import Parallel, delayed
 import scipy as sc
 import timeit
 import matplotlib.pyplot as plt
-from utils import run_experiment
+from utils import run_experiment 
+import datetime
 
-num_experiments = 13
+
+num_experiments = 11
 spacing = 5000 
 
 data = np.zeros(num_experiments, dtype=int)
@@ -17,14 +19,9 @@ for i in range(1,num_experiments):
 data = np.flip(data)
 
 H = 600
-runs = 96
+runs = 48
 c = []
 num_success = 1
-num_trials = data[-1]
-
-
-
-
 
 phi = LinearFeatureMap()
 phi.init_fourier_features(2,2)
@@ -55,9 +52,9 @@ for i in range(len(data)):
 
 err_log = sc.stats.sem(c_log.T)
 err_sq = sc.stats.sem(c_sq.T)
-
-np.save('c_log.npy', c_log)
-np.save('c_sq.npy', c_sq)
+current_time = datetime.datetime.now()
+np.save('results/c_log_'+ str(current_time) + '.npy', c_log)
+np.save('results/c_sq_'+ str(current_time) + '.npy', c_sq)
 
 plt.plot(data, costs_log / runs, label = 'log')
 plt.plot(data, costs_sq / runs, label='sq')
@@ -65,6 +62,6 @@ plt.xlabel('Number of trajectories')
 plt.ylabel('$V(\pi_{FQI})$')
 plt.legend()
 plt.title('Performance of FQI vs Size of Dataset ')
-plt.savefig('mc_plot.pdf')
+plt.savefig('results/mc_plot_' + str(current_time) + '.pdf')
 plt.legend()
 plt.show()

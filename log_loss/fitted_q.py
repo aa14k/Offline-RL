@@ -6,6 +6,7 @@ import itertools as iters
 from joblib import Parallel, delayed
 from scipy.optimize import least_squares
 import scipy as sc
+import gc
 import timeit
 import copy
 
@@ -66,6 +67,9 @@ class FittedQIteration(object):
             self.A_[h] = self.x_
             #self.A_[h,1] = self.x_[self.a_idx[h,1]]
             #self.A_[h,2] = self.x_[self.a_idx[h,2]]
+
+        del(data)
+        gc.collect()
     
     def get_targets_sq(self,h):
         data = self.data.copy()
@@ -74,6 +78,8 @@ class FittedQIteration(object):
             #a, c, s_ = data[h][1], data[h][2], data[h][3]
         a, c = data[h][1], data[h][2]
         
+        del(data)
+        gc.collect()
         
         a0 = self.a_idx[h,0]
         a1 = self.a_idx[h,1] 
@@ -109,6 +115,9 @@ class FittedQIteration(object):
             
         a, c = data[h][1], data[h][2]
         
+        del(data)
+        gc.collect()
+
         a0 = self.a_idx[h,0]
         a1 = self.a_idx[h,1] 
         a2 = self.a_idx[h,2]

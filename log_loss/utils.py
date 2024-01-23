@@ -1,43 +1,10 @@
 from environments import MountainCar
-from features import LinearFeatureMap
 import numpy as np
+import gc 
 from tqdm.notebook import tqdm
-import itertools as iters
 from joblib import Parallel, delayed
-from scipy.optimize import least_squares
-import scipy as sc
 import timeit
-import copy
-import matplotlib.pyplot as plt
 from fitted_q import FittedQIteration
-
-def move_successful_trajectories(tuples, H):
-    x = np.where(tuples[-1][2] == 0)
-    if len(x) == 1:
-        idx = x[0][0]
-        for h in range(H):
-            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
-            s1,a1,c1,s_1 = tuples[h][0][0], tuples[h][1][0], tuples[h][2][0], tuples[h][3][0]
-            tuples[h][0][0], tuples[h][1][0], tuples[h][2][0], tuples[h][3][0] = s,a,c,s_
-            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
-        
-    else:
-        idx = x[0]
-        v = range(len(idx))
-        for h in range(H):
-            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
-            s1,a1,c1,s_1 = tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v]
-            tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v] = s,a,c,s_
-            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
-            
-    return tuples
-
-
-def truncate_data(tuples, H, num_trials):
-    tuples_new = []
-    for h in range(H):
-        tuples_new.append([tuples[h][0][:num_trials],tuples[h][1][:num_trials],tuples[h][2][:num_trials],tuples[h][3][:num_trials],tuples[h][4]])
-    return tuples_new
 
 
 def get_data(H, num_trials, num_success=None):
@@ -62,7 +29,7 @@ def get_data(H, num_trials, num_success=None):
         x = np.where(tuples[H-1][2]==0)
         if x[0].shape[0] >= num_success:
             return tuples
-            break
+            
 
 def evaluate_policy(policy,H, var, theta1, theta2, phi): 
     
@@ -74,7 +41,7 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
         s[0,:] = np.ones(num_trials) * - 0.5
         #s[0,:] = np.random.uniform(low = -1.2, high = 0.6, size = num_trials)
         env.reset()
-        costs = []
+        #costs = []
         for h in (range(H)):
             X = phi.fourier_basis(s.T)
             q = np.zeros((num_trials,3))
@@ -83,7 +50,7 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
             a = np.argmin(q, axis=1)
             cost, s_ = env.step_broadcast(s, a, num_trials, var)
             s = s_
-            costs.append(cost)
+            #costs.append(cost)
     else:
         
         num_trials = 1
@@ -92,7 +59,7 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
         env.reset()
-        costs = []
+        #costs = []
         for h in (range(H)):
             X = phi.fourier_basis(s.T)
             q = np.zeros((num_trials,3))
@@ -101,9 +68,33 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
             a = np.argmin(q, axis=1)
             cost, s_ = env.step_broadcast(s, a, num_trials, var)
             s = s_
-            costs.append(cost)
+            #costs.append(cost)
         
-    return costs
+    return cost
+
+def run_experiment(H, num_trials, phi, d, num_success=1, gamma = 1.0):
+    tuples = get_data(H, num_trials, num_success)
+    features = 'fourier'
+    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma, d)
+    del(tuples)
+    gc.collect()
+    theta1 = agent.update_Q_log()
+    theta2 = agent.update_Q_sq()
+    del(agent)
+    var = 0.0
+    cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
+    cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
+    gc.collect()
+    return [cost_log, cost_sq]
+
+
+
+
+
+
+
+
+#INGORE BELOW
 
 
 
@@ -161,20 +152,6 @@ def evaluate_steps(policy, H, var, theta1, theta2, phi):
         
     return costs, s_vec, step
 
-def run_experiment(H, num_trials, phi, d, num_success=1, gamma = 1.0):
-    tuples = get_data(H, num_trials, num_success)
-    features = 'fourier'
-    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma, d)
-    theta1 = agent.update_Q_log()
-    theta2 = agent.update_Q_sq()
-    var = 0.0
-    cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
-    cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
-    
-    return [sum(cost_log), sum(cost_sq)]
-
-
-
 def fixed_trajectory_loop(data, tuples, phi, runs, H, num_trials, njob):
     c = []
     for i in tqdm(range(len(data))):
@@ -218,3 +195,31 @@ def run_experiment_fixed_data(tup, H, num_trials, phi):
     
     return [(sum(cost_log)), sum(sum(cost_sq))]
         
+
+def move_successful_trajectories(tuples, H):
+    x = np.where(tuples[-1][2] == 0)
+    if len(x) == 1:
+        idx = x[0][0]
+        for h in range(H):
+            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
+            s1,a1,c1,s_1 = tuples[h][0][0], tuples[h][1][0], tuples[h][2][0], tuples[h][3][0]
+            tuples[h][0][0], tuples[h][1][0], tuples[h][2][0], tuples[h][3][0] = s,a,c,s_
+            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
+        
+    else:
+        idx = x[0]
+        v = range(len(idx))
+        for h in range(H):
+            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
+            s1,a1,c1,s_1 = tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v]
+            tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v] = s,a,c,s_
+            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
+            
+    return tuples
+
+
+def truncate_data(tuples, H, num_trials):
+    tuples_new = []
+    for h in range(H):
+        tuples_new.append([tuples[h][0][:num_trials],tuples[h][1][:num_trials],tuples[h][2][:num_trials],tuples[h][3][:num_trials],tuples[h][4]])
+    return tuples_new
