@@ -3,8 +3,9 @@
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
-__pycache__/
+__pycache__
 *.py[cod]
+*.pyc
 *$py.class
 
 # C extensions
@@ -173,4 +174,11 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+#data and plots
+*.pdf
+*.npy
+*.pickle
+
+data/
+results/
 # End of https://www.toptal.com/developers/gitignore/api/python
