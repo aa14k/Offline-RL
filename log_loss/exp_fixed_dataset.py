@@ -2,34 +2,35 @@ from features import LinearFeatureMap
 import numpy as np
 from tqdm import tqdm
 from joblib import Parallel, delayed
+import joblib
 import scipy as sc
 import timeit
 import matplotlib.pyplot as plt
-from utils import get_data, run_experiment_fixed_dataset, move_successful_trajectories
+from utils import get_data, run_experiment_fixed_dataset, move_successful_trajectories, truncate_data
 import pickle
 import gc
 import datetime
 
 
-num_experiments = 7
-spacing = 5000 
+num_experiments = 3
+spacing = 3000 
 
 data = np.zeros(num_experiments, dtype=int)
 data[0] = int(1000)
 for i in range(1,num_experiments):
-    data[i] = int(spacing * i) + spacing
+    data[i] = int(spacing * i) 
 data = np.flip(data)
 
 
 
 H = 600
-runs = 14
+runs = 8
 c = []
-num_success = 2
+num_success = 1
 num_trials = data[0]
 
-get_new_data = True
-data_start = 8
+get_new_data = False
+data_start = 0
 
 
 if get_new_data == True:
@@ -56,12 +57,25 @@ print(d)
 print('Starting FQI')
 
 file_path = 'data/mountain_car/mc_data_traj_' + str(data[0]) + '_'
-
+file_path_trunc = 'data/mountain_car/truncated_data/' + str(data[0]) + '_trunc_'
 for i in range(len(data)):
     tic = timeit.default_timer()
     num_trials = int(data[i])
     print(num_trials)
-    x = Parallel(n_jobs=-1)(delayed(run_experiment_fixed_dataset)(H, num_trials, phi, d, file_path + str(j)) for j in tqdm(range(runs)))
+
+    for k in range(runs):
+        with open(file_path + str(k) + '.pickle', 'rb') as handle:
+            tuples = joblib.load(handle)
+        tuples = truncate_data(tuples, H, num_trials)
+        file_path_trunc = 'data/mountain_car/truncated_data/'
+        with open(file_path_trunc + str(num_trials) + '_' + str(k) + '.pickle', 'wb') as handle:
+            joblib.dump(tuples, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    del(tuples)
+    gc.collect()
+
+
+
+    x = Parallel(n_jobs=-1)(delayed(run_experiment_fixed_dataset)(H, num_trials, phi, d, file_path_trunc + str(num_trials) + '_' + str(j)) for j in tqdm(range(runs)))
     toc = timeit.default_timer()
     print('Time: %ss' %(toc-tic))
     c.append(x)

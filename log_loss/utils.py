@@ -3,6 +3,7 @@ import numpy as np
 import gc 
 from tqdm.notebook import tqdm
 from joblib import Parallel, delayed
+import joblib
 import timeit
 from fitted_q import FittedQIteration
 import pickle
@@ -125,13 +126,11 @@ def truncate_data(tuples, H, num_trials):
 
 def run_experiment_fixed_dataset(H, num_trials, phi, d, file_path, gamma = 1.0):
     with open(file_path + '.pickle', 'rb') as handle:
-        tuples = pickle.load(handle)
-    
-    tuples_trunc = truncate_data(tuples, H, num_trials)
-    del(tuples)
+        tuples = joblib.load(handle)
     
     features = 'fourier'
-    agent = FittedQIteration(phi, features, tuples_trunc, H, num_trials, gamma, d)
+    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma, d)
+    del(tuples)
     theta1 = agent.update_Q_log()
     theta2 = agent.update_Q_sq()
     del(agent)
