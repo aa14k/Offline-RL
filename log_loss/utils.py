@@ -5,6 +5,7 @@ from tqdm.notebook import tqdm
 from joblib import Parallel, delayed
 import timeit
 from fitted_q import FittedQIteration
+import pickle
 
 
 def get_data(H, num_trials, num_success=None):
@@ -89,7 +90,56 @@ def run_experiment(H, num_trials, phi, d, num_success=1, gamma = 1.0):
 
 
 
+def move_successful_trajectories(tuples, H):
+    x = np.where(tuples[-1][2] == 0)
+    if len(x) == 1:
+        idx = x[0][0]
+        for h in range(H):
+            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
+            s1,a1,c1,s_1 = tuples[h][0][0], tuples[h][1][0], tuples[h][2][0], tuples[h][3][0]
+            tuples[h][0][0], tuples[h][1][0], tuples[h][2][0], tuples[h][3][0] = s,a,c,s_
+            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
+        
+    else:
+        idx = x[0]
+        v = range(len(idx))
+        for h in range(H):
+            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
+            s1,a1,c1,s_1 = tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v]
+            tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v] = s,a,c,s_
+            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
+            
+    return tuples
 
+
+def truncate_data(tuples, H, num_trials):
+    tuples_new = []
+    for h in range(H):
+        tuples_new.append([tuples[h][0][:num_trials],tuples[h][1][:num_trials],tuples[h][2][:num_trials],tuples[h][3][:num_trials],tuples[h][4]])
+    del(tuples)
+    gc.collect()
+    return tuples_new
+
+
+
+
+def run_experiment_fixed_dataset(H, num_trials, phi, d, file_path, gamma = 1.0):
+    with open(file_path + '.pickle', 'rb') as handle:
+        tuples = pickle.load(handle)
+    
+    tuples_trunc = truncate_data(tuples, H, num_trials)
+    del(tuples)
+    
+    features = 'fourier'
+    agent = FittedQIteration(phi, features, tuples_trunc, H, num_trials, gamma, d)
+    theta1 = agent.update_Q_log()
+    theta2 = agent.update_Q_sq()
+    del(agent)
+    var = 0.0
+    cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
+    cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
+    gc.collect()
+    return [cost_log, cost_sq]
 
 
 
@@ -184,42 +234,6 @@ def run_experiment_horizon(H, num_trials, phi, num_success, gamma = 1.0):
     return [step_log, step_sq]
 
 
-def run_experiment_fixed_data(tup, H, num_trials, phi):
-    features = 'fourier'
-    agent = FittedQIteration(phi,features,tup,H,num_trials)
-    theta1 = agent.update_Q_log()
-    theta2 = agent.update_Q_sq()
-    var = 0.0
-    cost_log,s_vec_log = evaluate_policy('log', H, var, theta1, theta2, phi)
-    cost_sq,s_vec_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
-    
-    return [(sum(cost_log)), sum(sum(cost_sq))]
+
         
 
-def move_successful_trajectories(tuples, H):
-    x = np.where(tuples[-1][2] == 0)
-    if len(x) == 1:
-        idx = x[0][0]
-        for h in range(H):
-            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
-            s1,a1,c1,s_1 = tuples[h][0][0], tuples[h][1][0], tuples[h][2][0], tuples[h][3][0]
-            tuples[h][0][0], tuples[h][1][0], tuples[h][2][0], tuples[h][3][0] = s,a,c,s_
-            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
-        
-    else:
-        idx = x[0]
-        v = range(len(idx))
-        for h in range(H):
-            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
-            s1,a1,c1,s_1 = tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v]
-            tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v] = s,a,c,s_
-            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
-            
-    return tuples
-
-
-def truncate_data(tuples, H, num_trials):
-    tuples_new = []
-    for h in range(H):
-        tuples_new.append([tuples[h][0][:num_trials],tuples[h][1][:num_trials],tuples[h][2][:num_trials],tuples[h][3][:num_trials],tuples[h][4]])
-    return tuples_new
