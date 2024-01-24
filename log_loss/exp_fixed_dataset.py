@@ -40,7 +40,7 @@ if get_new_data == True:
         del(tuples)
         file_path = 'data/mountain_car/mc_data_traj_' + str(data[0]) + '_'  + str(i) + '.pickle'
         with open(file_path, 'wb') as handle:
-            pickle.dump(moved, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            joblib.dump(moved, handle, protocol=pickle.HIGHEST_PROTOCOL)
         del(moved)
         gc.collect()
 
