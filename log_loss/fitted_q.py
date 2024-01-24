@@ -1,24 +1,15 @@
-from features import LinearFeatureMap
 import numpy as np
-from tqdm.notebook import tqdm
-from sklearn.linear_model import LogisticRegression
-import itertools as iters
-from joblib import Parallel, delayed
-from scipy.optimize import least_squares
 import scipy as sc
-import gc
-import timeit
-import copy
 
 class FittedQIteration(object):
-    def __init__(self,phi,features,data,horizon,num_trials,gamma,d):
+    def __init__(self,phi,features,data,horizon,num_trials,gamma):
         self.phi = phi
         self.features = features
         self.data = data
         self.H = horizon
         self.n = num_trials
         self.gamma = gamma
-        self.d = d
+        self.d = len(self.phi.order_list)
         self.theta_sq_ = np.zeros((self.H,3,self.d)) 
         self.theta_sq = np.zeros((self.H,3,self.d))
         self.theta_log = np.zeros((self.H,3,self.d))
@@ -67,9 +58,6 @@ class FittedQIteration(object):
             self.A_[h] = self.x_
             #self.A_[h,1] = self.x_[self.a_idx[h,1]]
             #self.A_[h,2] = self.x_[self.a_idx[h,2]]
-
-        del(data)
-        gc.collect()
     
     def get_targets_sq(self,h):
         data = self.data.copy()
@@ -78,8 +66,6 @@ class FittedQIteration(object):
             #a, c, s_ = data[h][1], data[h][2], data[h][3]
         a, c = data[h][1], data[h][2]
         
-        del(data)
-        gc.collect()
         
         a0 = self.a_idx[h,0]
         a1 = self.a_idx[h,1] 
@@ -115,9 +101,6 @@ class FittedQIteration(object):
             
         a, c = data[h][1], data[h][2]
         
-        del(data)
-        gc.collect()
-
         a0 = self.a_idx[h,0]
         a1 = self.a_idx[h,1] 
         a2 = self.a_idx[h,2]
@@ -161,7 +144,7 @@ class FittedQIteration(object):
 
     def func(self, theta, X, Y):
         # Return residual = fit-observed
-        return self.sigmoid(np.inner(X,theta)) - Y
+        return self.sigmoid(np.inner(x,theta)) - y
 
     def func1(self, theta, X, Y):
         # Return residual = fit-observed

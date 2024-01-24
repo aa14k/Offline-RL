@@ -125,7 +125,7 @@ class MountainCar(object):
             return cost, s_
         else:
             cost = np.where(pos >= 0.6, 0, 1)
-            s_ = [None] * n
+            s_ = np.array([None] * n)
             return cost, s_
     
     def step(self, action):
