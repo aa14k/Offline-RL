@@ -1,5 +1,13 @@
+from features import LinearFeatureMap
 import numpy as np
+from tqdm.notebook import tqdm
+from sklearn.linear_model import LogisticRegression
+import itertools as iters
+from joblib import Parallel, delayed
+from scipy.optimize import least_squares
 import scipy as sc
+import timeit
+import copy
 
 class FittedQIteration(object):
     def __init__(self,phi,features,data,horizon,num_trials,gamma):

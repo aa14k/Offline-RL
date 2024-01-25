@@ -21,10 +21,10 @@ phi = LinearFeatureMap()
 phi.init_fourier_features(2,2)
 phi.init_state_normalizers(np.array([0.6,0.07]),np.array([-1.2,-0.07]))
 print('Running FQI')
-for dat in (range(len(data))):
+for i in tqdm(range(len(data))):
     tic = timeit.default_timer()
-    x = Parallel(n_jobs=14)(delayed(run_experiment)(H, dat, phi, 1) for _ in tqdm(range(runs)))
-    print(dat, np.sum(x, axis = 0))
+    x = Parallel(n_jobs=-3)(delayed(run_experiment)(H, data[i], phi, 1) for j in tqdm(range(runs)))
+    print(np.sum(x,axis=0))
     toc = timeit.default_timer()
     print('Time: %ss' %(toc-tic))
     c.append(x)

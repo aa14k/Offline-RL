@@ -1,11 +1,15 @@
 from environments import MountainCar
+from features import LinearFeatureMap
 import numpy as np
 from tqdm.notebook import tqdm
+import itertools as iters
 from joblib import Parallel, delayed
+from scipy.optimize import least_squares
+import scipy as sc
 import timeit
+import copy
 import matplotlib.pyplot as plt
 from fitted_q import FittedQIteration
-import gc
 
 def move_successful_trajectories(tuples, H):
     x = np.where(tuples[-1][2] == 0)
@@ -107,14 +111,13 @@ def run_experiment(H, num_trials, phi, num_success, gamma = 1.0):
     tuples = get_data(H, num_trials, num_success)
     features = 'fourier'
     agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma)
-    tuples = []
     theta1 = agent.update_Q_log()
     theta2 = agent.update_Q_sq()
+    tuples = []
     agent = []
     var = 0.0
     cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
     cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
-    gc.collect()
     return [cost_log, cost_sq]
 
 
