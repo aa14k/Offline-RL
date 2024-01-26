@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from fitted_q import FittedQIteration
 import pickle
 import datetime
+import scipy as sc
 from utils import evaluate_policy
 import gc
 
@@ -30,13 +31,17 @@ def get_data(H, num_trials, num_success=None):
             cost, s_ = env.step_broadcast(s, a, num_trials, var)
             tuples.append([s.T,a+1,cost,np.array(s_).T,h])
             s = s_
-        x = np.where(tuples[H-1][2]==0)
+        #x = np.where(tuples[H-1][2]==0.5)
+        #print(s)
+        x = np.where(tuples[-1][0][:,0] >= 0.6)
         if x[0].shape[0] >= num_success:
             return tuples
 
 
 def move_successful_trajectories(tuples, H):
-    x = np.where(tuples[-1][2] == 0)
+    #x = np.where(tuples[-1][2] == 0.5)
+    #print(tuples[-1][0][:,0])
+    x = np.where(tuples[-1][0][:,0] >= 0.6)
     if len(x) == 1:
         idx = x[0][0]
         for h in range(H):
@@ -94,9 +99,9 @@ def run_experiment_fixed_dataset(H, file_path, num_trials, phi, gamma = 1.0):
 
 
 
-data = [30000,25000,20000,15000,10000,5000,1000]
+data = [30000,27000,24000,21000,18000,15000,12000,9000,6000,3000,1000]
 H = 600
-runs = 56
+runs = 90
 c = []
 num_trials = data[-1]
 get_fixed_data(H, data, runs)
@@ -110,7 +115,7 @@ file_path = 'data/mountain_car/'
 num_trials = max(data)
 for i in (range(len(data))):
     tic = timeit.default_timer()
-    x = Parallel(n_jobs=-3)(delayed(run_experiment_fixed_dataset)(H, file_path + str(j) + '_' + str(num_trials) + '.pkl', data[i], phi) for j in tqdm(range(runs)))
+    x = Parallel(n_jobs=-4)(delayed(run_experiment_fixed_dataset)(H, file_path + str(j) + '_' + str(num_trials) + '.pkl', data[i], phi) for j in tqdm(range(runs)))
     print(np.sum(x,axis=0))
     toc = timeit.default_timer()
     print('Time: %ss' %(toc-tic))
@@ -132,8 +137,8 @@ err_log = sc.stats.sem(c_log.T)
 err_sq = sc.stats.sem(c_sq.T)
 
 current_time = datetime.datetime.now()
-np.save('results/c_log_'+ str(current_time), c_log)
-np.save('results/c_sq_'+ str(current_time), c_sq)
+np.save('results/2c_log_'+ str(current_time), c_log)
+np.save('results/2c_sq_'+ str(current_time), c_sq)
 
 plt.plot(data, costs_log / runs, label = 'log')
 plt.plot(data, costs_sq / runs, label='sq')
@@ -141,5 +146,5 @@ plt.xlabel('Number of trajectories')
 plt.ylabel('$V(\pi_{FQI})$')
 plt.legend()
 plt.title('Performance of FQI vs Size of Dataset over' + str(runs) + ' runs with ' + str(num_success) + 'Successful Trajs.')
-plt.savefig('results/mc_plot_' + str(current_time) + '.pdf')
+plt.savefig('results/2mc_plot_' + str(current_time) + '.pdf')
 plt.legend()

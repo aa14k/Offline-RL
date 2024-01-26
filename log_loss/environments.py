@@ -124,7 +124,7 @@ class MountainCar(object):
             s_ = np.array([pos,vel])
             return cost, s_
         else:
-            cost = np.where(pos >= 0.6, 0, 1)
+            cost = np.where(pos >= 0.6, np.random.binomial(n=1,p=0.5), np.random.binomial(n=1,p=0.9)) #first arguement is for the successful trajectory 
             s_ = np.array([None] * n)
             return cost, s_
     
