@@ -1,95 +1,15 @@
 from environments import MountainCar
+from features import LinearFeatureMap
 import numpy as np
-import gc 
 from tqdm.notebook import tqdm
+import itertools as iters
 from joblib import Parallel, delayed
-import joblib
+from scipy.optimize import least_squares
+import scipy as sc
 import timeit
+import copy
+import matplotlib.pyplot as plt
 from fitted_q import FittedQIteration
-import pickle
-
-
-def get_data(H, num_trials, num_success=None):
-    for x in range(5000):
-        
-        if num_success == None:
-            num_success = 1
-            
-        env = MountainCar(H)
-        var = 0.0
-        s = np.zeros((2,num_trials))
-        s[0,:] = np.ones(num_trials) * - 0.5
-        #s[0,:] = np.random.uniform(low = -1.2, high = 0.6, size = num_trials)
-        env.reset()
-        tuples = []
-        
-        for h in (range(H)):
-            a = np.random.choice([-1,0,1],size=num_trials)
-            cost, s_ = env.step_broadcast(s, a, num_trials, var)
-            tuples.append([s.T,a+1,cost,np.array(s_).T,h])
-            s = s_
-        x = np.where(tuples[H-1][2]==0)
-        if x[0].shape[0] >= num_success:
-            return tuples
-            
-
-def evaluate_policy(policy,H, var, theta1, theta2, phi): 
-    
-    if policy == 'log':
-        num_trials = 1
-        env = MountainCar(H)
-        
-        s = np.zeros((2,num_trials))
-        s[0,:] = np.ones(num_trials) * - 0.5
-        #s[0,:] = np.random.uniform(low = -1.2, high = 0.6, size = num_trials)
-        env.reset()
-        #costs = []
-        for h in (range(H)):
-            X = phi.fourier_basis(s.T)
-            q = np.zeros((num_trials,3))
-            for a in range(3):
-                q[:,a] = X @ theta1[h,a]
-            a = np.argmin(q, axis=1)
-            cost, s_ = env.step_broadcast(s, a, num_trials, var)
-            s = s_
-            #costs.append(cost)
-    else:
-        
-        num_trials = 1
-        env = MountainCar(H)
-        
-        s = np.zeros((2,num_trials))
-        s[0,:] = np.ones(num_trials) * - 0.5
-        env.reset()
-        #costs = []
-        for h in (range(H)):
-            X = phi.fourier_basis(s.T)
-            q = np.zeros((num_trials,3))
-            for a in range(3):
-                q[:,a] = X @ theta2[h,a]
-            a = np.argmin(q, axis=1)
-            cost, s_ = env.step_broadcast(s, a, num_trials, var)
-            s = s_
-            #costs.append(cost)
-        
-    return cost
-
-def run_experiment(H, num_trials, phi, d, num_success=1, gamma = 1.0):
-    tuples = get_data(H, num_trials, num_success)
-    features = 'fourier'
-    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma, d)
-    del(tuples)
-    gc.collect()
-    theta1 = agent.update_Q_log()
-    theta2 = agent.update_Q_sq()
-    del(agent)
-    var = 0.0
-    cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
-    cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
-    gc.collect()
-    return [cost_log, cost_sq]
-
-
 
 def move_successful_trajectories(tuples, H):
     x = np.where(tuples[-1][2] == 0)
@@ -117,89 +37,104 @@ def truncate_data(tuples, H, num_trials):
     tuples_new = []
     for h in range(H):
         tuples_new.append([tuples[h][0][:num_trials],tuples[h][1][:num_trials],tuples[h][2][:num_trials],tuples[h][3][:num_trials],tuples[h][4]])
-    del(tuples)
-    gc.collect()
     return tuples_new
 
 
-
-
-def run_experiment_fixed_dataset(H, num_trials, phi, d, file_path, gamma = 1.0):
-    with open(file_path + '.pickle', 'rb') as handle:
-        tuples = joblib.load(handle)
-    
-    features = 'fourier'
-    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma, d)
-    del(tuples)
-    theta1 = agent.update_Q_log()
-    theta2 = agent.update_Q_sq()
-    del(agent)
-    var = 0.0
-    cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
-    cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
-    gc.collect()
-    return [cost_log, cost_sq]
-
-
-
-
-#INGORE BELOW
-
-
-
-def evaluate_steps(policy, H, var, theta1, theta2, phi): 
-    
-    if policy == 'log':
-        num_trials = 1
-        env = MountainCar(H)
+def get_data(H, num_trials, means, num_success=None):
+    for x in range(5000):
         
+        if num_success == None:
+            num_success = 1
+            
+        env = MountainCar(H,means)
+        var = 0.0
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
         #s[0,:] = np.random.uniform(low = -1.2, high = 0.6, size = num_trials)
         env.reset()
+        tuples = []
+        
+        for h in (range(H)):
+            a = np.random.choice([-1,0,1],size=num_trials)
+            cost, s_ = env.step_broadcast(s, a, num_trials, var)
+            tuples.append([s.T,a+1,cost,np.array(s_).T,h])
+            s = s_
+        x = np.where(tuples[H-1][2]==0)
+        if x[0].shape[0] >= num_success:
+            return tuples
+
+def evaluate_policy(policy,H, var, theta1, theta2, phi, means): 
+    
+    if policy == 'log':
+        num_trials = 1
+        env = MountainCar(H, means)
+        
+        s = np.zeros((2,num_trials))
+        s[0,:] = np.ones(num_trials) * - 0.5
+        env.reset()
         costs = []
-        s_vec = []
-        step = H + 1
         for h in (range(H)):
             X = phi.fourier_basis(s.T)
             q = np.zeros((num_trials,3))
             for a in range(3):
                 q[:,a] = X @ theta1[h,a]
             a = np.argmin(q, axis=1)
-            cost, s_ = env.step_broadcast(s, a, num_trials, var)
-            
-            if s[0] >= 0.6:
-                step = min(step,h)
-                
+            cost, s_ = env.step_broadcast_eval(s, a, num_trials, var)
             costs.append(cost)
             s = s_
-            s_vec.append(s)
     else:
         
         num_trials = 1
-        env = MountainCar(H)
-        step = H + 1
+        env = MountainCar(H,means)
+        
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
         env.reset()
         costs = []
-        s_vec = []
         for h in (range(H)):
             X = phi.fourier_basis(s.T)
             q = np.zeros((num_trials,3))
             for a in range(3):
                 q[:,a] = X @ theta2[h,a]
             a = np.argmin(q, axis=1)
-            cost, s_ = env.step_broadcast(s, a, num_trials, var)
-            
-            if s[0] >= 0.6:
-                step = min(step,h)
-                
+            cost, s_ = env.step_broadcast_eval(s, a, num_trials, var)
             costs.append(cost)
             s = s_
-            s_vec.append(s)
         
-    return costs, s_vec, step
+    return sum(costs)
+
+
+
+
+
+def run_experiment(H, num_trials, phi, num_success, gamma = 1.0):
+    tuples = get_data(H, num_trials, num_success)
+    features = 'fourier'
+    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma)
+    theta1 = agent.update_Q_log()
+    theta2 = agent.update_Q_sq()
+    tuples = []
+    agent = []
+    var = 0.0
+    cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
+    cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
+    return [cost_log, cost_sq]
+
+
+
+
+
+def run_experiment2(tup, H, num_trials, phi):
+    features = 'fourier'
+    agent = FittedQIteration(phi,features,tup,H,num_trials)
+    theta1 = agent.update_Q_log()
+    theta2 = agent.update_Q_sq()
+    var = 0.0
+    cost_log = evaluate_policy('log', H, var, theta1, theta2, phi)
+    cost_sq = evaluate_policy('sq', H, var, theta1, theta2, phi)
+    
+    return [(sum(cost_log)), sum(sum(cost_sq))]
+
 
 def fixed_trajectory_loop(data, tuples, phi, runs, H, num_trials, njob):
     c = []
@@ -216,23 +151,4 @@ def fixed_trajectory_loop(data, tuples, phi, runs, H, num_trials, njob):
         print('Time: %ss' %(toc-tic))
         c.append(x)
     return c
-
-
-
-def run_experiment_horizon(H, num_trials, phi, num_success, gamma = 1.0):
-    tuples = get_data(H, num_trials, num_success)
-    features = 'fourier'
-    agent = FittedQIteration(phi,features,tuples,H,num_trials, gamma)
-    theta1 = agent.update_Q_log()
-    #theta2 = agent.update_Q_sq()
-    theta2 = theta1
-    var = 0.0
-    cost_log,s_vec_log,step_log = evaluate_steps('log', H, var, theta1, theta2, phi)
-    cost_sq,s_vec_sq,step_sq = evaluate_steps('sq', H, var, theta1, theta2, phi)
-    
-    return [step_log, step_sq]
-
-
-
         
-
