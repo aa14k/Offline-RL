@@ -110,7 +110,7 @@ class MountainCar(object):
         vel = np.where(vel >= 0.07, 0.07, vel)
         
         #vel_top_idx = np.where(vel >= 0.07)
-        #vel[vel_bottom_idx] = -0.07
+        #vel[vel_bottom_idx] = -0.07  
         #vel[vel_top_idx] = 0.07
         
         cost = np.zeros(n)
