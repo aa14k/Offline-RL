@@ -130,7 +130,7 @@ class MountainCar(object):
             return cost, s_
         
 
-    def step_broadcast(self, s, action, n, var):
+    def step_broadcast_eval(self, s, action, n, var):
         self.h += 1
         
         pos = s[0,:]
@@ -234,10 +234,7 @@ class Acrobot(object):
             s_ = [None] * n
             return cost, s_
     
-    def step(self, action):
-        
-            
-        return cost, [self.pos, self.vel], self.h, self.done
+    
 
 
 

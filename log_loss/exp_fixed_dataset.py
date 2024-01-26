@@ -104,7 +104,7 @@ H = 600
 runs = 90
 c = []
 num_trials = data[-1]
-#get_fixed_data(H, data, runs)
+get_fixed_data(H, data, runs, num_success=5)
 
 
 
@@ -137,14 +137,13 @@ err_log = sc.stats.sem(c_log.T)
 err_sq = sc.stats.sem(c_sq.T)
 
 current_time = datetime.datetime.now()
-np.save('results/2c_log_'+ str(current_time), c_log)
-np.save('results/2c_sq_'+ str(current_time), c_sq)
+np.save('results/3c_log_'+ str(current_time), c_log)
+np.save('results/3c_sq_'+ str(current_time), c_sq)
 
-plt.plot(data, costs_log / runs, label = 'log')
-plt.plot(data, costs_sq / runs, label='sq')
+plt.plot(data, costs_log / runs - 0.5 , label = 'log')
+plt.plot(data, costs_sq / runs - 0.5 , label='sq')
 plt.xlabel('Number of trajectories')
 plt.ylabel('$V(\pi_{FQI})$')
 plt.legend()
-plt.title('Performance of FQI vs Size of Dataset over' + str(runs) + ' runs with ' + str(num_success) + 'Successful Trajs.')
-plt.savefig('results/2mc_plot_' + str(current_time) + '.pdf')
-plt.legend()
+#plt.title('Performance of FQI vs Size of Dataset over' + str(runs) + ' runs with ' + str(num_success) + 'Successful Trajs.')
+plt.savefig('results/3mc_plot_' + str(current_time) + '.pdf')

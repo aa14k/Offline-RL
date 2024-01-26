@@ -63,11 +63,11 @@ def get_data(H, num_trials, means, num_success=None):
         if x[0].shape[0] >= num_success:
             return tuples
 
-def evaluate_policy(policy,H, var, theta1, theta2, phi, means): 
+def evaluate_policy(policy,H, var, theta1, theta2, phi): 
     
     if policy == 'log':
         num_trials = 1
-        env = MountainCar(H, means)
+        env = MountainCar(H)
         
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
@@ -85,7 +85,7 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi, means):
     else:
         
         num_trials = 1
-        env = MountainCar(H,means)
+        env = MountainCar(H)
         
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
