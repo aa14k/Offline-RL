@@ -83,6 +83,7 @@ class DeepSea(object):
 class MountainCar(object):
     def __init__(self,horizon):
         self.horizon = horizon
+        self.means = np.array([0.5,0.9])
         self.reset()
         
     
@@ -124,7 +125,39 @@ class MountainCar(object):
             s_ = np.array([pos,vel])
             return cost, s_
         else:
-            cost = np.where(pos >= 0.6, np.random.binomial(n=1,p=0.5), np.random.binomial(n=1,p=0.9)) #first arguement is for the successful trajectory 
+            cost = np.where(pos >= 0.6, np.random.binomial(n=1,p=self.means[0]), np.random.binomial(n=1,p=self.means[1])) #first arguement is for the successful trajectory 
+            s_ = np.array([None] * n)
+            return cost, s_
+        
+
+    def step_broadcast(self, s, action, n, var):
+        self.h += 1
+        
+        pos = s[0,:]
+        vel = s[1,:]
+
+        noise = np.random.normal(size=len(pos)) * var
+        
+        vel = vel + 0.001 * action + -0.0025 * np.cos(3 * pos)
+        vel = np.where(vel <= -0.07, -0.07, vel)
+        vel = np.where(vel >= 0.07, 0.07, vel)
+        
+        #vel_top_idx = np.where(vel >= 0.07)
+        #vel[vel_bottom_idx] = -0.07  
+        #vel[vel_top_idx] = 0.07
+        
+        cost = np.zeros(n)
+        
+        pos = pos + vel + noise
+
+        pos = np.where(pos <= -1.2, -1.2, pos)
+        pos = np.where(pos >= 0.6, 0.6, pos)
+        
+        if self.h != self.horizon - 1:
+            s_ = np.array([pos,vel])
+            return cost, s_
+        else:
+            cost = np.where(pos >= 0.6, self.means[0], self.means[1]) #first arguement is for the successful trajectory 
             s_ = np.array([None] * n)
             return cost, s_
     

@@ -40,13 +40,13 @@ def truncate_data(tuples, H, num_trials):
     return tuples_new
 
 
-def get_data(H, num_trials, num_success=None):
+def get_data(H, num_trials, means, num_success=None):
     for x in range(5000):
         
         if num_success == None:
             num_success = 1
             
-        env = MountainCar(H)
+        env = MountainCar(H,means)
         var = 0.0
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
@@ -63,11 +63,11 @@ def get_data(H, num_trials, num_success=None):
         if x[0].shape[0] >= num_success:
             return tuples
 
-def evaluate_policy(policy,H, var, theta1, theta2, phi): 
+def evaluate_policy(policy,H, var, theta1, theta2, phi, means): 
     
     if policy == 'log':
         num_trials = 1
-        env = MountainCar(H)
+        env = MountainCar(H, means)
         
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
@@ -79,13 +79,13 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
             for a in range(3):
                 q[:,a] = X @ theta1[h,a]
             a = np.argmin(q, axis=1)
-            cost, s_ = env.step_broadcast(s, a, num_trials, var)
+            cost, s_ = env.step_broadcast_eval(s, a, num_trials, var)
             costs.append(cost)
             s = s_
     else:
         
         num_trials = 1
-        env = MountainCar(H)
+        env = MountainCar(H,means)
         
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
@@ -97,7 +97,7 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
             for a in range(3):
                 q[:,a] = X @ theta2[h,a]
             a = np.argmin(q, axis=1)
-            cost, s_ = env.step_broadcast(s, a, num_trials, var)
+            cost, s_ = env.step_broadcast_eval(s, a, num_trials, var)
             costs.append(cost)
             s = s_
         

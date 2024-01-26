@@ -104,7 +104,7 @@ H = 600
 runs = 90
 c = []
 num_trials = data[-1]
-get_fixed_data(H, data, runs)
+#get_fixed_data(H, data, runs)
 
 
 
