@@ -83,7 +83,7 @@ class DeepSea(object):
 class MountainCar(object):
     def __init__(self,horizon):
         self.horizon = horizon
-        self.means = np.array([0.5,0.9])
+        self.means = np.array([0,1.0])
         self.reset()
         
     

@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 
-c_log = np.load('results/2c_log_2024-01-26 11:38:15.589199.npy')
-c_sq = np.load('results/2c_sq_2024-01-26 11:38:15.589199.npy')
+c_log = np.load('results/3c_log_2024-01-27 15:15:33.532750.npy')
+c_sq = np.load('results/3c_sq_2024-01-27 15:15:33.532750.npy')
 
 
 c_log =np.sum(c_log,axis=1) - 0.5
 c_sq =np.sum(c_sq,axis=1) 
-print(c_log)
+#print(c_log)
 
 
 data = np.array([30000, 27000, 24000, 21000, 18000, 15000, 12000, 9000, 6000, 3000, 1000])
@@ -20,8 +20,8 @@ np.save('results/c_log_'+ str(current_time), c_log)
 np.save('results/c_sq_'+ str(current_time), c_sq)
 
 plt.figure(figsize=(7,4))
-plt.scatter(data, c_log / runs - 0.5, label = 'log')
-plt.scatter(data, c_sq / runs - 0.5, label='sq')
+plt.scatter(data, c_log / runs, label = 'log')
+plt.scatter(data, c_sq / runs, label='sq')
 plt.xlabel('Number of trajectories')
 plt.ylabel('$V(\pi_{FQI})$')
 plt.legend()

@@ -12,11 +12,8 @@ import scipy as sc
 from utils import evaluate_policy
 import gc
 
-def get_data(H, num_trials, num_success=None):
-    for x in range(5000):
-        
-        if num_success == None:
-            num_success = 1
+def get_data(H, num_trials, num_success = 1):
+    for x in range(10000):
             
         env = MountainCar(H)
         var = 0.0
@@ -34,11 +31,13 @@ def get_data(H, num_trials, num_success=None):
         #x = np.where(tuples[H-1][2]==0.5)
         #print(s)
         x = np.where(tuples[-1][0][:,0] >= 0.6)
+        #print(x[0].shape[0])
         if x[0].shape[0] >= num_success:
             return tuples
+    print('failed')
 
 
-def move_successful_trajectories(tuples, H):
+def move_successful_trajectories(tuples, H, num_success):
     #x = np.where(tuples[-1][2] == 0.5)
     #print(tuples[-1][0][:,0])
     x = np.where(tuples[-1][0][:,0] >= 0.6)
@@ -51,13 +50,23 @@ def move_successful_trajectories(tuples, H):
             tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
         
     else:
-        idx = x[0]
-        v = range(len(idx))
-        for h in range(H):
-            s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
-            s1,a1,c1,s_1 = tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v]
-            tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v] = s,a,c,s_
-            tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
+        idxs = x[0]
+        for i in range(len(idx)):
+            idx = idxs[i]
+            v = i * 1000
+            for h in range(H):
+                if i < num_success:
+                    s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
+                    s1,a1,c1,s_1 = tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v]
+                    tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v] = s,a,c,s_
+                    tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
+                else:
+                    v = -1.0 * i
+                    s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
+                    s1,a1,c1,s_1 = tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v]
+                    tuples[h][0][v], tuples[h][1][v], tuples[h][2][v], tuples[h][3][v] = s,a,c,s_
+                    tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx] = s1,a1,c1,s_1 
+
     
     return tuples
 
@@ -71,11 +80,12 @@ def truncate_data(tuples, H, num_trials):
 
 def get_fixed_data(H, data, runs, num_success = 1):
     
-    num_trials = max(data)
+    num_trials = 30000
     for i in tqdm(range(runs)):
-        file_path = 'data/mountain_car/' + str(i) + '_' + str(num_trials)
+        file_path = 'data/mountain_car/' + str(i) + '_' + str(max(data))
         tuples = get_data(H, num_trials, num_success)
-        tuples = move_successful_trajectories(tuples, H)
+        tuples = move_successful_trajectories(tuples, H, num_success)
+        tuples = truncate_data(tuples,H,max(data))
         with open(file_path + '.pkl', 'wb') as f:
             pickle.dump(tuples, f)
         gc.collect()
@@ -100,11 +110,12 @@ def run_experiment_fixed_dataset(H, file_path, num_trials, phi, gamma = 1.0):
 
 
 data = [30000,27000,24000,21000,18000,15000,12000,9000,6000,3000,1000]
-H = 600
+H = 800
 runs = 90
 c = []
 num_trials = data[-1]
-get_fixed_data(H, data, runs, num_success=5)
+print('getting data')
+get_fixed_data(H, data, runs, num_success=10)
 
 
 
@@ -140,8 +151,8 @@ current_time = datetime.datetime.now()
 np.save('results/3c_log_'+ str(current_time), c_log)
 np.save('results/3c_sq_'+ str(current_time), c_sq)
 
-plt.plot(data, costs_log / runs - 0.5 , label = 'log')
-plt.plot(data, costs_sq / runs - 0.5 , label='sq')
+plt.plot(data, costs_log / runs , label = 'log')
+plt.plot(data, costs_sq / runs , label='sq')
 plt.xlabel('Number of trajectories')
 plt.ylabel('$V(\pi_{FQI})$')
 plt.legend()
