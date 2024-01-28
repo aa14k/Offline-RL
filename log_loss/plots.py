@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 
-c_log = np.load('results/3c_log_2024-01-27 15:15:33.532750.npy')
-c_sq = np.load('results/3c_sq_2024-01-27 15:15:33.532750.npy')
+c_log = np.load('results/3c_log_2024-01-27 22:20:30.304386.npy')
+c_sq = np.load('results/3c_sq_2024-01-27 22:20:30.304386.npy')
 
 
 c_log =np.sum(c_log,axis=1) - 0.5

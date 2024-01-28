@@ -53,7 +53,7 @@ def move_successful_trajectories(tuples, H, num_success):
         idxs = x[0]
         for i in range(len(idx)):
             idx = idxs[i]
-            v = i * 1000
+            v = i 
             for h in range(H):
                 if i < num_success:
                     s,a,c,s_ = tuples[h][0][idx], tuples[h][1][idx], tuples[h][2][idx], tuples[h][3][idx]
@@ -78,9 +78,8 @@ def truncate_data(tuples, H, num_trials):
     return tuples_new
 
 
-def get_fixed_data(H, data, runs, num_success = 1):
+def get_fixed_data(H, data, runs, num_trials=100000, num_success = 1):
     
-    num_trials = 30000
     for i in tqdm(range(runs)):
         file_path = 'data/mountain_car/' + str(i) + '_' + str(max(data))
         tuples = get_data(H, num_trials, num_success)
@@ -113,9 +112,8 @@ data = [30000,27000,24000,21000,18000,15000,12000,9000,6000,3000,1000]
 H = 800
 runs = 90
 c = []
-num_trials = data[-1]
 print('getting data')
-get_fixed_data(H, data, runs, num_success=10)
+get_fixed_data(H, data, runs, num_trials = 40000, num_success=1)
 
 
 
