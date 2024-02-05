@@ -151,12 +151,12 @@ class FittedQIteration(object):
         return self.sol.x
 
     def func(self, theta, X, Y):
-        # Return residual = fit-observed
-        return self.sigmoid(np.inner(x,theta)) - y
+        # Return residual = fit-observed IGNORE FOR 
+        return np.sum( (self.sigmoid(X @ theta) - Y) )
 
     def func1(self, theta, X, Y):
         # Return residual = fit-observed
-        return np.sum( (self.sigmoid(X @ theta) - Y) ** 2)
+        return np.sum((self.sigmoid(X @ theta) - Y) ** 2)
 
     def jac(self, theta, X, Y):
         p = self.sigmoid(np.matmul(X,theta))

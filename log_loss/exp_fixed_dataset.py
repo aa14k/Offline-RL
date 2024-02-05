@@ -75,11 +75,12 @@ def truncate_data(tuples, H, num_trials):
     tuples_new = []
     for h in range(H):
         tuples_new.append([tuples[h][0][:num_trials],tuples[h][1][:num_trials],tuples[h][2][:num_trials],tuples[h][3][:num_trials],tuples[h][4]])
+    tuples = []
     return tuples_new
 
 
-def get_fixed_data(H, data, runs, num_trials=100000, num_success = 1):
-    
+def get_fixed_data(H, data, runs, num_trials, num_success):
+    num_trials = num_trials + 5 * num_success #so that we have only num_success many good trajectories in the training set. 
     for i in tqdm(range(runs)):
         file_path = 'data/mountain_car/' + str(i) + '_' + str(max(data))
         tuples = get_data(H, num_trials, num_success)
@@ -96,8 +97,8 @@ def run_experiment_fixed_dataset(H, file_path, num_trials, phi, gamma = 1.0):
     tuples = truncate_data(tuples, H, num_trials)
     features = 'fourier'
     agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma)
-    theta1 = agent.update_Q_log()
     theta2 = agent.update_Q_sq()
+    theta1 = agent.update_Q_log()
     var = 0.0
     tuples = []
     agent = []
@@ -108,12 +109,14 @@ def run_experiment_fixed_dataset(H, file_path, num_trials, phi, gamma = 1.0):
 
 
 
-data = [30000,27000,24000,21000,18000,15000,12000,9000,6000,3000,1000]
+data = [15000,12000,9000,6000,3000,1000]
 H = 800
-runs = 90
+runs = 45
 c = []
 print('getting data')
-get_fixed_data(H, data, runs, num_trials = 40000, num_success=1)
+num_success = 30
+num_trials = 300000
+#get_fixed_data(H, data, runs, num_trials, num_success)
 
 
 
@@ -121,7 +124,7 @@ phi = LinearFeatureMap()
 phi.init_fourier_features(2,2)
 phi.init_state_normalizers(np.array([0.6,0.07]),np.array([-1.2,-0.07]))
 file_path = 'data/mountain_car/'
-num_trials = max(data)
+num_trials = 30000
 for i in (range(len(data))):
     tic = timeit.default_timer()
     x = Parallel(n_jobs=-4)(delayed(run_experiment_fixed_dataset)(H, file_path + str(j) + '_' + str(num_trials) + '.pkl', data[i], phi) for j in tqdm(range(runs)))
@@ -146,8 +149,10 @@ err_log = sc.stats.sem(c_log.T)
 err_sq = sc.stats.sem(c_sq.T)
 
 current_time = datetime.datetime.now()
-np.save('results/3c_log_'+ str(current_time), c_log)
-np.save('results/3c_sq_'+ str(current_time), c_sq)
+print(c_log)
+print(c_sq)
+np.save('results/c_log_'+ str(current_time) + '_H' + '_' + str(H) + '_' + str(num_success), c_log)
+np.save('results/c_rwsq_'+ str(current_time) + '_H' + '_' + str(H) + '_' + str(num_success), c_sq)
 
 plt.plot(data, costs_log / runs , label = 'log')
 plt.plot(data, costs_sq / runs , label='sq')
@@ -155,4 +160,4 @@ plt.xlabel('Number of trajectories')
 plt.ylabel('$V(\pi_{FQI})$')
 plt.legend()
 #plt.title('Performance of FQI vs Size of Dataset over' + str(runs) + ' runs with ' + str(num_success) + 'Successful Trajs.')
-plt.savefig('results/3mc_plot_' + str(current_time) + '.pdf')
+plt.savefig('results/mc_plot_' + str(current_time) + '.pdf')
