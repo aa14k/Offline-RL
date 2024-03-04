@@ -40,40 +40,33 @@ def truncate_data(tuples, H, num_trials):
     return tuples_new
 
 
-def get_data(H, num_trials, means, num_success=None):
+def get_data(H, num_trials, means, num_success=1):
+    num_success=0##
     for x in range(5000):
-        
-        if num_success == None:
-            num_success = 1
-            
-        env = MountainCar(H,means)
-        var = 0.0
+        env = MountainCar(H)
         s = np.zeros((2,num_trials))
         s[0,:] = np.ones(num_trials) * - 0.5
         #s[0,:] = np.random.uniform(low = -1.2, high = 0.6, size = num_trials)
         env.reset()
         tuples = []
-        
-        for h in (range(H)):
+        for h in range(H):
             a = np.random.choice([-1,0,1],size=num_trials)
-            cost, s_ = env.step_broadcast(s, a, num_trials, var)
-            tuples.append([s.T,a+1,cost,np.array(s_).T,h])
+            cost, s_ = env.step_broadcast(s, a, num_trials)
+            tuples.append([s.T,a+1,cost,s_.T,h])
             s = s_
         x = np.where(tuples[H-1][2]==0)
-        if x[0].shape[0] >= num_success:
+        if x[0].shape[0] >= num_success:# todo fix this to collect all data until full and then add a success, is it acceptable if there are more than num_success successes?
             return tuples
 
-def evaluate_policy(policy,H, var, theta1, theta2, phi): 
-    
+def evaluate_policy(policy,H, var, theta1, theta2, phi): # pass in one theta, don't need policy flag
+    num_trials = 1
+    env = MountainCar(H)
+    s = np.zeros((2,num_trials))
+    s[0,:] = np.ones(num_trials) * - 0.5
+    env.reset()
+    costs = []
     if policy == 'log':
-        num_trials = 1
-        env = MountainCar(H)
-        
-        s = np.zeros((2,num_trials))
-        s[0,:] = np.ones(num_trials) * - 0.5
-        env.reset()
-        costs = []
-        for h in (range(H)):
+        for h in range(H):
             X = phi.fourier_basis(s.T)
             q = np.zeros((num_trials,3))
             for a in range(3):
@@ -83,14 +76,6 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
             costs.append(cost)
             s = s_
     else:
-        
-        num_trials = 1
-        env = MountainCar(H)
-        
-        s = np.zeros((2,num_trials))
-        s[0,:] = np.ones(num_trials) * - 0.5
-        env.reset()
-        costs = []
         for h in (range(H)):
             X = phi.fourier_basis(s.T)
             q = np.zeros((num_trials,3))
@@ -100,7 +85,6 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
             cost, s_ = env.step_broadcast_eval(s, a, num_trials, var)
             costs.append(cost)
             s = s_
-        
     return sum(costs)
 
 
@@ -109,9 +93,10 @@ def evaluate_policy(policy,H, var, theta1, theta2, phi):
 
 def run_experiment(H, num_trials, phi, num_success, gamma = 1.0):
     tuples = get_data(H, num_trials, num_success)
-    features = 'fourier'
-    agent = FittedQIteration(phi, features, tuples, H, num_trials, gamma)
+    print('data is had')
+    agent = FittedQIteration(phi, 'fourier', tuples, H, num_trials, gamma)
     theta1 = agent.update_Q_log()
+    exit()
     theta2 = agent.update_Q_sq()
     tuples = []
     agent = []

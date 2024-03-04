@@ -45,7 +45,6 @@ class FittedQIteration(object):
         
     
     def get_A(self):
-        #print('Getting A')
         data = self.data.copy()
         self.a_idx = {}
         for h in (range(self.H)):
@@ -54,11 +53,10 @@ class FittedQIteration(object):
             self.a_idx[h,0] = np.where(a==0)
             self.a_idx[h,1] = np.where(a==1)
             self.a_idx[h,2] = np.where(a==2)
-            
+
             self.x = self.get_phi(s)
             if h != self.H - 1:
                 self.x_ = self.get_phi(s_)
-            
             self.A[h,0] = self.x[self.a_idx[h,0]]
             self.A[h,1] = self.x[self.a_idx[h,1]]
             self.A[h,2] = self.x[self.a_idx[h,2]]
@@ -100,6 +98,16 @@ class FittedQIteration(object):
             self.tar_sq[h,0] = c[a0] 
             self.tar_sq[h,1] = c[a1] 
             self.tar_sq[h,2] = c[a2] 
+
+    # def get_targets(h,final,gamma,data,actions,phi_,theta_):# note just pass in the dataset at time h, i.e. data=data[h]
+    #     # data.shape = (t,t,t,t,1), since data = (ss,as,rs,s's,h)
+    #     as, cs = data[1], data[2]
+    #     if final:
+    #         return [cs[as==a] for a in actions]
+    #     else:
+    #         vhat = sigmoid(np.min(phi_@theta_[h+1],axis=0))# shape (t,)
+    #         qhat = cs + gamma * vhat
+    #         return [qhat[as==a] for a in actions]
                 
     def get_targets_log(self,h):
         data = self.data.copy()
@@ -125,7 +133,6 @@ class FittedQIteration(object):
             inner0 = self.sigmoid(np.matmul(phi_,self.theta_log_[h+1,0]))
             inner1 = self.sigmoid(np.matmul(phi_,self.theta_log_[h+1,1]))
             inner2 = self.sigmoid(np.matmul(phi_,self.theta_log_[h+1,2]))
-            
             v = self.gamma * np.minimum(inner0,inner1,inner2)
             
             self.tar_log[h,0] = c[a0] + v[a0]

@@ -35,7 +35,11 @@ class LinearFeatureMap(object):
         order_list = self.order_list
         x = np.zeros((len(state),len(order_list)))
         for i in range(len(order_list)):
+            # print(state.shape, order_list[i].shape)
+            # print(np.matmul(state, order_list[i]))
+            # print(x[:,i])
             x[:,i] = np.matmul(state, order_list[i])
+            # print(x[:,i])
         x = np.cos(np.pi*x)
         return x
 

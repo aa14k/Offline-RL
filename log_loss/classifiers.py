@@ -1,6 +1,5 @@
 import numpy as np
 import scipy as sc
-from scipy.optimize import least_squares
 from tqdm.notebook import tqdm
 from sklearn.linear_model import LogisticRegression
 
@@ -28,10 +27,11 @@ class Sigmoid_Regression(object):
         #    A = A + np.outer(x, x)
         #    b = b + y * x
         #self.theta_ols = np.linalg.solve(A,b)
-        sol = least_squares(self.func, self.theta_ls, args=(self.features,self.obs))
+        sol = sc.optimize.least_squares(self.func, self.theta_ls, args=(self.features,self.obs))
         self.theta_ls = sol.x
     
     def solve_Logit_Regression(self):
+        # note pretty sure that setting random state here does nothing
         self.clf = LogisticRegression(tol = self.logit_regression_tol, random_state = 0).fit(self.features, self.obs)
         return np.array(self.clf.coef_)
 

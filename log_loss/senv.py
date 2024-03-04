@@ -1,17 +1,31 @@
 import numpy as np
+from itertools import product
 
+def makebasis(statedim, order):
+    return np.array(list(product(np.arange(order+1), repeat=statedim)))
+
+def polyfeat(states, basis):
+    return np.apply_along_axis(lambda x:np.power(x,basis).prod(1),1,states)
+
+def fourierfeat(states, basis, min, max):
+    return np.cos(np.pi*(states-min)/max@basis.T)
+
+# environments
 class MountainCar(object):# action space: [0,1,2]
-    def __init__(self,H,width=1,feat=lambda s:s):
+    def __init__(self,H,order,width=1,feat='p'):
         self.H = H
-        self.width=width
-        self.feat=feat
+        b = makebasis(2,order)
+        self.feat=[lambda s:polyfeat(s,b),
+                   lambda s:fourierfeat(s,b,np.array([-1.2,-7e-2]),
+                                        np.array([1.8,.14]))][feat=='f']
         self.reset(width)
-    def reset(self,width=self.width):
-        self.width=width
+
+    def reset(self,width=0):
+        if width: self.width=width
         #self.pos = np.random.uniform(low=-1.2,high=0.6)
         #self.vel = np.random.uniform(low=-0.07,high=0.07)
-        self.pos = np.full(width,-0.5)
-        self.vel = np.zeros(width)
+        self.pos = np.full(self.width,-0.5)
+        self.vel = np.zeros(self.width)
         self.h = 0
         self.getstate = lambda: self.feat(np.stack((self.pos,self.vel),axis=1))
         return self.getstate()
@@ -19,15 +33,15 @@ class MountainCar(object):# action space: [0,1,2]
     def step(self, a):
         self.h+=1
         self.vel = np.clip(self.vel + 1e-3*(a-1) - 2.5e-3*np.cos(3*self.pos),-7e-2,7e-2)
-        self.pos = np.clip(self.pos+self.vel,-1.2,0.6)
-        cost = (self.h==self.H)*(self.pos==0.6).astype(np.float64)
+        self.pos = np.clip(self.pos+self.vel*(self.pos!=0.6),-1.2,0.6)
+        cost = (self.h==self.H)*(self.pos!=0.6).astype(np.float64)
         return cost, self.getstate()
 
 
-# class Acrobot(object):
-#     def __init__(self,horizon):
-#         self.horizon = horizon
-#         self.reset()
+class Acrobot(object):
+    def __init__(self,horizon):
+        self.horizon = horizon
+        self.reset()
     
 #     def reset(self):
 #         return None
@@ -57,10 +71,14 @@ class MountainCar(object):# action space: [0,1,2]
 #             cost = np.where(pos >= 0.6, 0, 1)
 #             s_ = [None] * n
 #             return cost, s_
+
+class CartPole(object):
+    def __init__(self,horizon):
+        self.horizon = horizon
+        self.reset()
     
-    
+#     def reset(self):
+#         return None
 
-
-
-        
-        
+#     def step(self, action):
+#         return None

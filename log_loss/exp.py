@@ -13,7 +13,7 @@ num_experiments = 5
 spacing = 5000 
 
 data = np.zeros(num_experiments, dtype=int)
-data[0] = int(30000)
+data[0] = 30000
 for i in range(1,num_experiments):
     data[i] = int(spacing * i) + data[0]
 data = np.flip(data)
@@ -26,7 +26,7 @@ num_success = 1
 phi = LinearFeatureMap()
 phi.init_fourier_features(2,3)
 phi.init_state_normalizers(np.array([0.6,0.07]),np.array([-1.2,-0.07]))
-d = int(len(phi.order_list))
+d = len(phi.order_list)
 print(d)
 print('Starting FQI')
 for i in range(len(data)):
