@@ -12,7 +12,7 @@ def fourierfeat(states, basis, min, max):
 
 # environments
 class MountainCar(object):# action space: [0,1,2]
-    def __init__(self,H,order,width=1,feat='p'):
+    def __init__(self,H,order,width=1,feat='f'):
         self.H = H
         b = makebasis(2,order)
         self.feat=[lambda s:polyfeat(s,b),

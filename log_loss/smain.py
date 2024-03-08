@@ -8,18 +8,21 @@ from senv import MountainCar, CartPole, Acrobot
 import datetime
 
 # env params
-H = 600
+H = 800
 order = 2
 simwidth=10000
-feat='p' # f or p
+feat='f' # f or p
 envparams=(H,order,simwidth,feat)
 # exp params
 envtype=MountainCar
-datasiz=[30000, 25000, 20000, 15000, 10000, 5000, 1000]
-succsiz=1
-runs=56
+datasiz=[1000, 3000, 6000, 9000, 12000, 15000, 18000, 21000, 24000, 27000, 30000]
+succsiz=[1,5,30]
+trials=90
 
 if __name__=='__main__':
+    c=Parallel(n_jobs=-3)(delayed(exper)(todo
+                                         ) for i in range(trials))
+
     cs=np.zeros((len(datasiz),2,runs))
     for i in tqdm(range(len(datasiz))):
         tic=timer()
