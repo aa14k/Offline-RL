@@ -11,9 +11,11 @@ def fourierfeat(states, basis, min, max):
     return np.cos(np.pi*(states-min)/max@basis.T)
 
 # environments
+# cartpole has A==2, others have A==3
 class MountainCar(object):# action space: [0,1,2]
     def __init__(self,H,order,width=1,feat='f'):
         self.H = H
+        self.A = 3
         b = makebasis(2,order)
         self.feat=[lambda s:polyfeat(s,b),
                    lambda s:fourierfeat(s,b,np.array([-1.2,-7e-2]),

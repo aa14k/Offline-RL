@@ -20,30 +20,45 @@ succsiz=[1,5,30]
 trials=90
 
 if __name__=='__main__':
-    c=Parallel(n_jobs=-3)(delayed(exper)(todo
-                                         ) for i in range(trials))
-
-    cs=np.zeros((len(datasiz),2,runs))
-    for i in tqdm(range(len(datasiz))):
-        tic=timer()
-        c=Parallel(n_jobs=-3)(delayed(exper)(MountainCar, envparams,
-                                             (datasiz[i], succsiz))
-                              for j in tqdm(range(runs)))
-        toc=timer()
-        print(f'{np.sum(c,axis=0)}\nTime: {toc-tic}')
-        cs[i]=np.array(c).T
-        c.append(c)
-
-    clog, csq=np.split(cs,2,1)
+    c=np.array(Parallel(n_jobs=-3)(
+        delayed(exper)(envtype, envparams,
+                       datasiz, succsiz)
+        for _ in range(trials)))
+    clog, csq = map(np.squeeze, np.split(c,2,-1))
     time=str(datetime.datetime.now())
-    np.save('sresults/c_log_'+time, clog)
-    np.save('sresults/c_sq_'+time, csq)
+    np.save('sresults/clog-'+time, clog)
+    np.save('sresults/csq-'+time, csq)
+    for i in range(len(succsiz)):
+        plt.plot(data,clog.sum(0)[i]/trials,label='log')
+        plt.plot(data,csq.sum(0)[i]/trials,label='sq')
+        plt.xlabel('Number of trajectories')
+        plt.ylabel('$V(\pi_{FQI})$')
+        plt.legend()
+        plt.title('Performance vs Size of Dataset over'\
+                  f'{trials} trials with {succsiz[i]} successful traj.')
+        plt.savefig(f'sresults/mcplot-{time}.pdf')
+
+
+    # cs=np.zeros((len(datasiz),2,runs))
+    # for i in tqdm(range(len(datasiz))):
+    #     tic=timer()
+    #     c=Parallel(n_jobs=-3)(delayed(exper)(MountainCar, envparams,
+    #                                          (datasiz[i], succsiz))
+    #                           for j in tqdm(range(runs)))
+    #     toc=timer()
+    #     print(f'{np.sum(c,axis=0)}\nTime: {toc-tic}')
+    #     cs[i]=np.array(c).T
+    #     c.append(c)
+
+    # clog, csq=np.split(cs,2,1)
+    # time=str(datetime.datetime.now())
+    # np.save('sresults/c_log_'+time, clog)
+    # np.save('sresults/c_sq_'+time, csq)
     
-    plt.plot(data,clog.sum(1)/runs,label='log')
-    plt.plot(data,csq.sum(1)/runs,label='sq')
-    plt.xlabel('Number of trajectories')
-    plt.ylabel('$V(\pi_{FQI})$')
-    plt.legend()
-    plt.title(f'Performance of FQI vs Size of Dataset over {runs} runs with {succsiz} successful trajs.')
-    plt.savefig(f'sresults/mc_plot_{time}.pdf')
-    plt.legend()
+    # plt.plot(data,clog.sum(1)/runs,label='log')
+    # plt.plot(data,csq.sum(1)/runs,label='sq')
+    # plt.xlabel('Number of trajectories')
+    # plt.ylabel('$V(\pi_{FQI})$')
+    # plt.legend()
+    # plt.title(f'Performance of FQI vs Size of Dataset over {runs} runs with {succsiz} successful trajs.')
+    # plt.savefig(f'sresults/mc_plot_{time}.pdf')
