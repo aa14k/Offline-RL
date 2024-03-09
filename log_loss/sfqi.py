@@ -6,7 +6,7 @@ from scipy.optimize import minimize as scmin
 def fqi(data, A, loss='log', gamma=1.0):
     theta = np.zeros((len(data)+1,A,data[0][0].shape[1]))
     l, dl = (llog,dllog) if loss=='log' else (lsq,dlsq)
-    vhat = np.zeros(data[0][0].shape[0])
+    vhat = np.zeros(data[0][0].shape[0])# todo check shapes
     for h in range(len(data)-1,-1,-1):
         Ss, As, Cs = data[h]
         qhat = Cs + gamma * vhat
