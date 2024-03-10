@@ -7,8 +7,8 @@ def makebasis(statedim, order):
 def polyfeat(states, basis):
     return np.apply_along_axis(lambda x:np.power(x,basis).prod(1),1,states)
 
-def fourierfeat(states, basis, min, max):
-    return np.cos(np.pi*(states-min)/max@basis.T)
+def fourierfeat(states, basis, min, range):
+    return np.cos(np.pi*(states-min)/range@basis.T)
 
 # environments
 # cartpole has A==2, others have A==3
@@ -35,7 +35,8 @@ class MountainCar(object):# action space: [0,1,2]
     def step(self, a):
         self.h+=1
         self.vel = np.clip(self.vel + 1e-3*(a-1) - 2.5e-3*np.cos(3*self.pos),-7e-2,7e-2)
-        self.pos = np.clip(self.pos+self.vel*(self.pos!=0.6),-1.2,0.6)
+#        self.pos = np.clip(self.pos+self.vel*(self.pos!=0.6),-1.2,0.6)
+        self.pos = np.clip(self.pos+self.vel,-1.2,0.6)# not forcing stopping at endpoint
         cost = (self.h==self.H)*(self.pos!=0.6).astype(np.float64)
         return cost, self.getstate()
 
