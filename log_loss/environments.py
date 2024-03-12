@@ -6,8 +6,9 @@ class MountainCar(object):# action space: [0,1,2]
         self.width=width
         self.feat=feat
         self.reset(width)
-    def reset(self,width=self.width):
-        self.width=width
+    def reset(self,width=None):
+        if width == None:
+            self.width=width
         #self.pos = np.random.uniform(low=-1.2,high=0.6)
         #self.vel = np.random.uniform(low=-0.07,high=0.07)
         self.pos = np.full(width,-0.5)

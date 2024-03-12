@@ -11,7 +11,7 @@ def fqi(data, A, loss='log', gamma=1.0):
         Ss, As, Cs = data[h]
         qhat = Cs + gamma * vhat
         for a in range(A):
-            theta[h,a] = scmin(l, x0=theta[h+1,a],
+            theta[h,a] = scmin(l, x0=np.zeros_like(theta[h+1,a]), # testing this
                                args=(Ss[As==a], qhat[As==a]),
                                jac=dl, method='L-BFGS-B').x
         vhat = sigmoid(np.min(theta[h]@Ss.T,axis=0))# shape (t,) TODO check the dimensions out here

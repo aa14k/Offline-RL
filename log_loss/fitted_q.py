@@ -81,13 +81,12 @@ class FittedQIteration(object):
             #phi_ = self.get_phi(s_)
             
             phi_ = self.A_[h]
-            q = np.zeros((len(a),3))
             
             inner0 = self.sigmoid(np.matmul(phi_,self.theta_sq_[h+1,0]))
             inner1 = self.sigmoid(np.matmul(phi_,self.theta_sq_[h+1,1]))
             inner2 = self.sigmoid(np.matmul(phi_,self.theta_sq_[h+1,2]))
             
-            v = self.gamma * np.minimum(inner0,inner1,inner2)
+            v = self.gamma * np.minimum(np.minimum(inner0,inner1),inner2)
             
             self.tar_sq[h,0] = c[a0] + v[a0]
             self.tar_sq[h,1] = c[a1] + v[a1]
@@ -133,7 +132,7 @@ class FittedQIteration(object):
             inner0 = self.sigmoid(np.matmul(phi_,self.theta_log_[h+1,0]))
             inner1 = self.sigmoid(np.matmul(phi_,self.theta_log_[h+1,1]))
             inner2 = self.sigmoid(np.matmul(phi_,self.theta_log_[h+1,2]))
-            v = self.gamma * np.minimum(inner0,inner1,inner2)
+            v = self.gamma * np.minimum(np.minimum(inner0,inner1),inner2)
             
             self.tar_log[h,0] = c[a0] + v[a0]
             self.tar_log[h,1] = c[a1] + v[a1]

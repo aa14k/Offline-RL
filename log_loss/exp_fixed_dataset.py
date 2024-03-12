@@ -109,7 +109,7 @@ def run_experiment_fixed_dataset(H, file_path, num_trials, phi, gamma = 1.0):
 
 
 
-data = [15000,12000,9000,6000,3000,1000]
+data = [30000,25000,20000,15000,10000,5000,1000]
 H = 800
 runs = 45
 c = []
@@ -130,7 +130,7 @@ for i in (range(len(data))):
     x = Parallel(n_jobs=-4)(delayed(run_experiment_fixed_dataset)(H, file_path + str(j) + '_' + str(num_trials) + '.pkl', data[i], phi) for j in tqdm(range(runs)))
     print(np.sum(x,axis=0))
     toc = timeit.default_timer()
-    print('Time: %ss' %(toc-tic))
+    print('Time: %ss' %(toc-tic, data[i])
     c.append(x)
         
 

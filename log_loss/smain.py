@@ -13,10 +13,10 @@ feat='f' # f or p
 envparams=(H,order,simwidth,feat)
 # exp params
 envtype=MountainCar
-#datasiz=[1000, 3000, 6000, 9000, 12000, 15000, 18000, 21000, 24000, 27000, 30000]
-datasiz = [1000,3000,6000]#[15000,12000,9000,6000,3000,1000]
-#succsiz=[1,5,30]
-succsiz=[1]
+datasiz=[1000, 3000, 6000, 9000, 12000, 15000, 18000, 21000, 24000, 27000, 30000]
+#datasiz = [1000,3000,6000]#[15000,12000,9000,6000,3000,1000]
+succsiz=[1,5,30]
+#succsiz=[1]
 trials=90
 
 if __name__=='__main__':
